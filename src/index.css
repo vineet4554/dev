@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-ranger-black via-gray-900 to-ranger-black text-white min-h-screen;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+}
+
+@layer components {
+  .ranger-card {
+    @apply bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg shadow-xl;
+  }
+  
+  .ranger-button {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95;
+  }
+  
+  .ranger-input {
+    @apply w-full px-4 py-3 bg-gray-800/70 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-ranger-blue focus:border-transparent;
+  }
+  
+  .morphin-glow {
+    box-shadow: 0 0 20px rgba(139, 0, 255, 0.5);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .status-open {
+    @apply bg-ranger-blue/20 text-ranger-blue border-ranger-blue;
+  }
+  
+  .status-progress {
+    @apply bg-ranger-yellow/20 text-ranger-yellow border-ranger-yellow;
+  }
+  
+  .status-hold {
+    @apply bg-orange-500/20 text-orange-400 border-orange-500;
+  }
+  
+  .status-resolved {
+    @apply bg-ranger-green/20 text-ranger-green border-ranger-green;
+  }
+  
+  .status-closed {
+    @apply bg-gray-500/20 text-gray-400 border-gray-500;
+  }
+  
+  .priority-critical {
+    @apply bg-ranger-red/20 text-ranger-red border-ranger-red;
+  }
+  
+  .priority-high {
+    @apply bg-orange-500/20 text-orange-400 border-orange-500;
+  }
+  
+  .priority-medium {
+    @apply bg-ranger-yellow/20 text-ranger-yellow border-ranger-yellow;
+  }
+  
+  .priority-low {
+    @apply bg-ranger-green/20 text-ranger-green border-ranger-green;
+  }
+  
+  .role-ranger {
+    @apply bg-ranger-red/10 border-ranger-red;
+  }
+  
+  .role-engineer {
+    @apply bg-ranger-blue/10 border-ranger-blue;
+  }
+  
+  .role-admin {
+    @apply bg-ranger-green/10 border-ranger-green;
+  }
+  
+  .role-superadmin {
+    @apply bg-zordon-gold/10 border-zordon-gold;
+  }
+}
