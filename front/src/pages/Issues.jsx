@@ -216,9 +216,11 @@ const IssueCard = ({ issue, isSelected, onSelect, showCheckbox }) => {
           <p className="text-sm text-gray-400 mb-3">{issue.description.substring(0, 150)}...</p>
           <div className="flex items-center flex-wrap gap-4 text-xs text-gray-500">
             <span>Category: {issue.category}</span>
-            <span>Reported by: {issue.createdBy}</span>
-            {issue.assignedTo && <span>Assigned to: {issue.assignedTo}</span>}
-            <SLATimer deadline={issue.slaDeadline} />
+            <span>Reported by: {issue.createdBy?.name || issue.createdBy || 'Unknown'}</span>
+            {issue.assignedTo && <span>Assigned to: {issue.assignedTo?.name || issue.assignedTo}</span>}
+            {issue.status !== 'resolved' && issue.status !== 'closed' && (
+              <SLATimer deadline={issue.slaDeadline} />
+            )}
             <span>{formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}</span>
           </div>
         </div>

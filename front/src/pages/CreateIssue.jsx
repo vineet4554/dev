@@ -30,7 +30,7 @@ const CreateIssue = () => {
     'Other',
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.title || !formData.description || !formData.category) {
@@ -38,14 +38,20 @@ const CreateIssue = () => {
       return;
     }
 
-    const newIssue = createIssue({
-      ...formData,
-      createdBy: user?.name || 'Unknown',
-      attachments: attachments.map((a) => a.name),
-    });
+    try {
+      // Backend will set createdBy from JWT token automatically
+      const newIssue = await createIssue({
+        ...formData,
+        // Don't send createdBy - backend uses req.user.sub from JWT
+      });
 
-    toast.success('Issue created successfully!');
-    navigate(`/issues/${newIssue.id}`);
+      if (newIssue && newIssue.id) {
+        navigate(`/issues/${newIssue.id}`);
+      }
+    } catch (error) {
+      // Error is already handled in createIssue function
+      console.error('Failed to create issue:', error);
+    }
   };
 
   const handleFileUpload = (e) => {

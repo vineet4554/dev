@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIssues } from '../context/IssueContext';
 import { useAuth } from '../context/AuthContext';
+import { commentsAPI } from '../services/api';
 import { FiSend, FiUser } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -8,45 +9,84 @@ import toast from 'react-hot-toast';
 const CommentSystem = ({ issue }) => {
   const { addComment } = useIssues();
   const { user } = useAuth();
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
 
-  const comments = issue.comments || [];
+  useEffect(() => {
+    const loadComments = async () => {
+      try {
+        setLoading(true);
+        const response = await commentsAPI.getByIssue(issue.id);
+        const commentsData = response.data.map(comment => ({
+          ...comment,
+          id: comment._id,
+          author: comment.authorId?.name || comment.authorId || 'Unknown',
+          text: comment.body,
+          timestamp: new Date(comment.createdAt),
+        }));
+        setComments(commentsData);
+      } catch (error) {
+        console.error('Failed to load comments:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadComments();
+  }, [issue.id]);
 
-  const handleSubmitComment = (e) => {
+  const handleSubmitComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) {
       toast.error('Please enter a comment');
       return;
     }
 
-    addComment(issue.id, {
-      author: user?.name || 'Anonymous',
-      text: newComment,
-      parentId: null,
-    });
-
-    setNewComment('');
-    toast.success('Comment added');
+    try {
+      await addComment(issue.id, newComment);
+      setNewComment('');
+      // Reload comments
+      const response = await commentsAPI.getByIssue(issue.id);
+      const commentsData = response.data.map(comment => ({
+        ...comment,
+        id: comment._id,
+        author: comment.authorId?.name || comment.authorId || 'Unknown',
+        text: comment.body,
+        timestamp: new Date(comment.createdAt),
+      }));
+      setComments(commentsData);
+    } catch (error) {
+      // Error already handled in addComment
+    }
   };
 
-  const handleSubmitReply = (parentId, e) => {
+  const handleSubmitReply = async (parentId, e) => {
     e.preventDefault();
     if (!replyText.trim()) {
       toast.error('Please enter a reply');
       return;
     }
 
-    addComment(issue.id, {
-      author: user?.name || 'Anonymous',
-      text: replyText,
-      parentId: parentId,
-    });
-
-    setReplyText('');
-    setReplyingTo(null);
-    toast.success('Reply added');
+    try {
+      // Replies are just regular comments for now
+      await addComment(issue.id, replyText);
+      setReplyText('');
+      setReplyingTo(null);
+      // Reload comments
+      const response = await commentsAPI.getByIssue(issue.id);
+      const commentsData = response.data.map(comment => ({
+        ...comment,
+        id: comment._id,
+        author: comment.authorId?.name || comment.authorId || 'Unknown',
+        text: comment.body,
+        timestamp: new Date(comment.createdAt),
+      }));
+      setComments(commentsData);
+    } catch (error) {
+      // Error already handled in addComment
+    }
   };
 
   const rootComments = comments.filter((c) => !c.parentId);
@@ -86,7 +126,9 @@ const CommentSystem = ({ issue }) => {
 
       {/* Comments List */}
       <div className="space-y-6">
-        {rootComments.length === 0 ? (
+        {loading ? (
+          <p className="text-gray-400 text-center py-8">Loading comments...</p>
+        ) : rootComments.length === 0 ? (
           <p className="text-gray-400 text-center py-8">No comments yet. Be the first to comment!</p>
         ) : (
           rootComments.map((comment) => (

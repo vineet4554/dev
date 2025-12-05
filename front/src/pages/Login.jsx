@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GiPowerRing } from 'react-icons/gi';
 import toast from 'react-hot-toast';
@@ -27,32 +27,29 @@ const Login = () => {
     ],
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.role) {
-      toast.error('Please select a role');
+    if (!formData.email || !formData.password) {
+      toast.error('Please enter email and password');
       return;
     }
 
-    const userList = demoUsers[formData.role] || [];
-    const user = userList.find(
-      (u) => u.email === formData.email && u.password === formData.password
-    );
-
-    if (user) {
-      login(user);
-      toast.success(`Welcome, ${user.name}!`);
+    const result = await login(formData.email, formData.password);
+    if (result.success) {
       navigate('/dashboard');
-    } else {
-      toast.error('Invalid credentials');
     }
   };
 
-  const quickLogin = (user) => {
-    login(user);
-    toast.success(`Welcome, ${user.name}!`);
-    navigate('/dashboard');
+  const quickLogin = async (demoUser) => {
+    // Try API login
+    const result = await login(demoUser.email, demoUser.password);
+    if (result.success) {
+      toast.success(`Welcome, ${demoUser.name}!`);
+      navigate('/dashboard');
+    } else {
+      toast.error('Login failed. Make sure backend is running and user exists.');
+    }
   };
 
   return (
@@ -115,6 +112,15 @@ const Login = () => {
             >
               Login to Command Center
             </button>
+
+            <div className="text-center">
+              <p className="text-sm text-gray-400">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-ranger-blue hover:text-ranger-blue/80 font-semibold">
+                  Sign up here
+                </Link>
+              </p>
+            </div>
           </form>
         </div>
 

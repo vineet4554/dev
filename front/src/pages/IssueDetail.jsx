@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIssues } from '../context/IssueContext';
 import { useAuth } from '../context/AuthContext';
+import { issuesAPI } from '../services/api';
 import { FiArrowLeft, FiEdit2, FiUser, FiClock } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import SLATimer from '../components/SLATimer';
@@ -13,10 +14,51 @@ import toast from 'react-hot-toast';
 const IssueDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { issues, updateIssue } = useIssues();
+  const { issues, loadIssues } = useIssues();
   const { isAdmin, isSuperAdmin, isEngineer } = useAuth();
+  const [issue, setIssue] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const issue = issues.find((i) => i.id === id);
+  useEffect(() => {
+    const fetchIssue = async () => {
+      try {
+        setLoading(true);
+        // First check if issue is in context
+        let foundIssue = issues.find((i) => i.id === id);
+        
+        if (!foundIssue) {
+          // Fetch from API if not in context
+          const response = await issuesAPI.getById(id);
+          foundIssue = {
+            ...response.data,
+            id: response.data._id,
+            createdAt: new Date(response.data.createdAt),
+            slaDeadline: response.data.slaDeadline ? new Date(response.data.slaDeadline) : null,
+            resolvedAt: response.data.resolvedAt ? new Date(response.data.resolvedAt) : null,
+            closedAt: response.data.closedAt ? new Date(response.data.closedAt) : null,
+            createdBy: response.data.createdBy?.name ? response.data.createdBy : (response.data.createdBy || {}),
+            assignedTo: response.data.assignedTo?.name ? response.data.assignedTo : (response.data.assignedTo || null),
+          };
+        }
+        
+        setIssue(foundIssue);
+      } catch (error) {
+        console.error('Failed to load issue:', error);
+        toast.error('Failed to load issue');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchIssue();
+  }, [id]);
+  
+  // Reload issue when issues context updates
+  useEffect(() => {
+    const foundIssue = issues.find((i) => i.id === id);
+    if (foundIssue) {
+      setIssue(foundIssue);
+    }
+  }, [issues, id]);
 
   if (!issue) {
     return (
@@ -66,13 +108,15 @@ const IssueDetail = () => {
             <div className="flex items-center flex-wrap gap-4 text-sm text-gray-400">
               <div className="flex items-center space-x-2">
                 <FiUser />
-                <span>Reported by: {issue.createdBy}</span>
+                <span>Reported by: {issue.createdBy?.name || issue.createdBy || 'Unknown'}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <FiClock />
                 <span>{formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}</span>
               </div>
-              <SLATimer deadline={issue.slaDeadline} />
+              {issue.status !== 'resolved' && issue.status !== 'closed' && (
+                <SLATimer deadline={issue.slaDeadline} />
+              )}
             </div>
           </div>
         </div>
@@ -128,7 +172,7 @@ const IssueDetail = () => {
               <DetailItem label="Facility" value={issue.facility} />
               <DetailItem
                 label="Assigned To"
-                value={issue.assignedTo || 'Unassigned'}
+                value={issue.assignedTo?.name || issue.assignedTo || 'Unassigned'}
                 highlight={!issue.assignedTo}
               />
               <DetailItem
@@ -155,20 +199,20 @@ const IssueDetail = () => {
               <TimelineItem
                 title="Issue Created"
                 time={issue.createdAt}
-                user={issue.createdBy}
+                user={issue.createdBy?.name || issue.createdBy || 'Unknown'}
               />
               {issue.assignedTo && (
                 <TimelineItem
                   title="Assigned"
                   time={issue.createdAt}
-                  user={issue.assignedTo}
+                  user={issue.assignedTo?.name || issue.assignedTo || 'Unknown'}
                 />
               )}
               {issue.resolvedAt && (
                 <TimelineItem
                   title="Resolved"
                   time={issue.resolvedAt}
-                  user={issue.assignedTo || 'System'}
+                  user={issue.assignedTo?.name || issue.assignedTo || 'System'}
                 />
               )}
             </div>

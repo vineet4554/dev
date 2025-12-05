@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { IssueProvider } from './context/IssueContext';
 import Login from './pages/Login';
+import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import Issues from './pages/Issues';
 import IssueDetail from './pages/IssueDetail';
@@ -31,6 +32,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+      <Route path="/signup" element={!user ? <SignUp /> : <Navigate to="/dashboard" />} />
       <Route
         path="/"
         element={
